@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Empathy Engine</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            font-size: 2.2rem;
+            margin-bottom: 0.3rem;
+            background: linear-gradient(90deg, #f093fb, #f5576c);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .subtitle {
+            text-align: center;
+            color: #9e9e9e;
+            margin-bottom: 2rem;
+            font-size: 1rem;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(0, 0, 0, 0.3);
+            color: #e0e0e0;
+            font-size: 1rem;
+            resize: vertical;
+            font-family: inherit;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #f093fb;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 0.9rem;
+            margin-top: 1rem;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(90deg, #f093fb, #f5576c);
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        button:hover { opacity: 0.9; }
+        .error {
+            background: rgba(245, 87, 108, 0.2);
+            border: 1px solid #f5576c;
+            padding: 0.8rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        .result-section { margin-top: 0.5rem; }
+        .emotion-badge {
+            display: inline-block;
+            padding: 0.4rem 1.2rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            text-transform: capitalize;
+        }
+        .emotion-happy { background: rgba(76, 175, 80, 0.3); border: 1px solid #4CAF50; }
+        .emotion-sad { background: rgba(33, 150, 243, 0.3); border: 1px solid #2196F3; }
+        .emotion-angry { background: rgba(244, 67, 54, 0.3); border: 1px solid #F44336; }
+        .emotion-surprised { background: rgba(255, 193, 7, 0.3); border: 1px solid #FFC107; color: #FFD54F; }
+        .emotion-inquisitive { background: rgba(156, 39, 176, 0.3); border: 1px solid #9C27B0; }
+        .emotion-concerned { background: rgba(255, 152, 0, 0.3); border: 1px solid #FF9800; }
+        .emotion-neutral { background: rgba(158, 158, 158, 0.3); border: 1px solid #9E9E9E; }
+        .intensity-bar {
+            height: 8px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+        .intensity-fill {
+            height: 100%;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #f093fb, #f5576c);
+            transition: width 0.5s;
+        }
+        .params-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .param-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+        }
+        .param-label {
+            font-size: 0.8rem;
+            color: #9e9e9e;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .param-value {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin: 0.3rem 0;
+        }
+        .param-change {
+            font-size: 0.85rem;
+        }
+        .change-up { color: #4CAF50; }
+        .change-down { color: #F44336; }
+        .change-none { color: #9E9E9E; }
+        audio {
+            width: 100%;
+            margin-top: 1rem;
+            border-radius: 8px;
+        }
+        .section-title {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #9e9e9e;
+            margin-bottom: 0.8rem;
+        }
+        .scores-row {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+        .score-item {
+            font-size: 0.85rem;
+            color: #bbb;
+        }
+        .score-item span { font-weight: 600; color: #e0e0e0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>The Empathy Engine</h1>
+        <p class="subtitle">Giving AI a Human Voice — Emotion-Driven Text-to-Speech</p>
+
+        <div class="card">
+            {% if error %}
+            <div class="error">{{ error }}</div>
+            {% endif %}
+
+            <form method="POST" action="/synthesize">
+                <textarea name="text" placeholder="Type or paste your text here... Try something emotional!&#10;&#10;Examples:&#10;• &quot;I just got promoted! This is the best day of my life!&quot;&#10;• &quot;I'm so frustrated with this terrible service.&quot;&#10;• &quot;The meeting is scheduled for 3 PM tomorrow.&quot;">{{ text or '' }}</textarea>
+                <button type="submit">Analyze & Speak</button>
+            </form>
+        </div>
+
+        {% if emotion %}
+        <div class="card result-section">
+            <div class="section-title">Detected Emotion</div>
+
+            <span class="emotion-badge emotion-{{ emotion.category }}">
+                {{ emotion.category }}
+            </span>
+
+            <div style="margin-top: 1rem;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                    <span>Intensity</span>
+                    <span>{{ (emotion.intensity * 100)|round|int }}%</span>
+                </div>
+                <div class="intensity-bar">
+                    <div class="intensity-fill" style="width: {{ (emotion.intensity * 100)|round|int }}%"></div>
+                </div>
+            </div>
+
+            <div class="scores-row">
+                <div class="score-item">Positive: <span>{{ (emotion.scores.pos * 100)|round|int }}%</span></div>
+                <div class="score-item">Negative: <span>{{ (emotion.scores.neg * 100)|round|int }}%</span></div>
+                <div class="score-item">Neutral: <span>{{ (emotion.scores.neu * 100)|round|int }}%</span></div>
+                <div class="score-item">Compound: <span>{{ emotion.compound }}</span></div>
+            </div>
+        </div>
+
+        <div class="card result-section">
+            <div class="section-title">Voice Parameters (Modulated)</div>
+            <div class="params-grid">
+                <div class="param-card">
+                    <div class="param-label">Voice</div>
+                    <div class="param-value" style="font-size:1.2rem">{{ result.parameters.voice }}</div>
+                    <div class="param-change change-none">OpenAI TTS</div>
+                </div>
+                <div class="param-card">
+                    <div class="param-label">Speed</div>
+                    <div class="param-value">{{ result.parameters.speed }}x</div>
+                    {% set spd_diff = result.parameters.speed - neutral_params.speed %}
+                    <div class="param-change {% if spd_diff > 0 %}change-up{% elif spd_diff < 0 %}change-down{% else %}change-none{% endif %}">
+                        {% if spd_diff > 0 %}+{{ '%.2f'|format(spd_diff) }}{% elif spd_diff < 0 %}{{ '%.2f'|format(spd_diff) }}{% else %}—{% endif %} vs neutral
+                    </div>
+                </div>
+                <div class="param-card">
+                    <div class="param-label">Pitch Shift</div>
+                    <div class="param-value">{{ result.parameters.pitch_shift }} st</div>
+                    {% set ps_diff = result.parameters.pitch_shift - neutral_params.pitch_shift %}
+                    <div class="param-change {% if ps_diff > 0 %}change-up{% elif ps_diff < 0 %}change-down{% else %}change-none{% endif %}">
+                        {% if ps_diff > 0 %}+{{ ps_diff }}{% elif ps_diff < 0 %}{{ ps_diff }}{% else %}—{% endif %} semitones
+                    </div>
+                </div>
+                <div class="param-card">
+                    <div class="param-label">Volume</div>
+                    <div class="param-value">{{ (result.parameters.volume * 100)|round|int }}%</div>
+                    {% set vol_diff = ((result.parameters.volume - neutral_params.volume) * 100)|round|int %}
+                    <div class="param-change {% if vol_diff > 0 %}change-up{% elif vol_diff < 0 %}change-down{% else %}change-none{% endif %}">
+                        {% if vol_diff > 0 %}+{{ vol_diff }}%{% elif vol_diff < 0 %}{{ vol_diff }}%{% else %}—{% endif %} vs neutral
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card result-section">
+            <div class="section-title">SSML Markup (Generated)</div>
+            <pre style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.8rem; color: #b0bec5; white-space: pre-wrap; word-wrap: break-word;">{{ result.ssml }}</pre>
+        </div>
+
+        <div class="card result-section">
+            <div class="section-title">Audio Output</div>
+            <audio controls autoplay>
+                <source src="{{ audio_url }}" type="audio/mpeg">
+                Your browser does not support the audio element.
+            </audio>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

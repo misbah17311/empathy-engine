@@ -1,6 +1,8 @@
-# The Empathy Engine 🎙️
+# The Empathy Engine — Challenge 1 🎙️
 
 **Giving AI a Human Voice — Emotion-Driven Text-to-Speech**
+
+> **Live Demo:** https://empathy-engine-hbj6.onrender.com
 
 A service that analyzes the emotional content of text and generates speech audio with dynamically modulated vocal parameters (voice selection, speed, pitch, volume) to match the detected emotion. Uses OpenAI's TTS API for natural, high-quality voices with ffmpeg post-processing for pitch and volume modulation. Moving beyond monotonic TTS delivery to achieve emotional resonance.
 
